@@ -19,7 +19,7 @@ public:
 
 // Operations
 public:
-
+	void ResetGame();
 // Overrides
 	protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -63,7 +63,7 @@ public:
 	Color chromaOut;
 	RECT screenRect;
 	
-	
+	bool yDirection;
 
 };
 

@@ -10,6 +10,9 @@ Reptile::Reptile(){
 	xVel = 0;
 	yVel = 0;
 	deathYPos = 0;
+
+	yMax = 0;
+	yMin = 0;
 }
 
 Reptile::~Reptile(){
@@ -19,10 +22,35 @@ Reptile::~Reptile(){
 
 
 void Reptile::Move() {
-	xPos += (int)xVel;
+	//if it is dead, start falling
+	if (!isAlive()) {
+		setYVel(5);
+		setXVel(5);
+
+		xPos += (int)xVel;
+		if (yPos + (int)yVel > deathYPos && yVel > 0) {
+			yVel *= -1;
+		}
+
+		if (yPos + (int)yVel > deathYPos) {
+			//remove bird here
+		}
+	}
+	else { //otherwise, don't fall, cycle between moving up and down
+		xPos += (int)xVel;
+		if (yPos + (int)yVel > yMin && yVel > 0) {
+			yVel *= -1;
+		}
+		else if (yPos - (int)yVel < yMax && yVel < 0) {
+			yVel *= -1;
+		}
+	}
+
 	yPos += (int)yVel;
-	setCenter();
+	setCenter(); //sets center of hitbox
 }
+
+
 
 bool Reptile::checkForKill(CPoint point) {
 	if(point.x >= (centerX-width/2) && point.x <= (centerX+width/2) && point.y >= (centerY-height/2) && point.y <=(centerY+height/2)){
@@ -72,6 +100,14 @@ int Reptile::getCenterY() {
 	return centerY;
 }
 
+int Reptile::getYMax() {
+	return yMax;
+}
+
+int Reptile::getYMin() {
+	return yMin;
+}
+
 
 void Reptile::setXPosition(int x) {
 	xPos = x;
@@ -108,6 +144,19 @@ void Reptile::setCenter() {
 	centerY = yPos + height/2;
 }
 
-void Reptile::deathAnimation() {
-	PlaySound(L"res/falling.wav", 0, SND_NOSTOP | SND_ASYNC | SND_LOOP);
+void Reptile::setMaxMin(int max, int min) {
+	yMax = max;
+	yMin = min;
+}
+
+void Reptile::setAlive(bool newAlive) {
+	alive = newAlive;
+}
+
+bool Reptile::checkForDelete() {
+	bool del = false;
+	if (yPos + yVel >= deathYPos) {
+		del = true;
+	}
+	return del;
 }

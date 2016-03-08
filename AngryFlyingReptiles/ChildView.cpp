@@ -12,6 +12,15 @@
 
 Reptile reptile;
 
+enum status {
+	dead,
+	falling,
+	alive,
+	gone
+};
+
+status state = alive;
+float angle = 0;
 // CChildView
 
 CChildView::CChildView()
@@ -26,7 +35,8 @@ CChildView::CChildView()
 	reptile.setXPosition(0);
 	reptile.setYPosition(500);
 	reptile.setXVel(5);
-
+	reptile.setYVel(5);
+	
 	backBmp = (Bitmap*)Image::FromFile(L"res//Background.bmp", 0);
 	midBmp = (Bitmap*)Image::FromFile(L"res//Midground.bmp", 0);
 	foreBmp = (Bitmap*)Image::FromFile(L"res//Foreground.bmp", 0);
@@ -66,8 +76,14 @@ END_MESSAGE_MAP()
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point) {
 	//on left click, kill bird maybe
 	if (reptile.checkForKill(point)) {
-		PlaySound(L"res//bang.wav", NULL, SND_FILENAME | SND_ASYNC);
-		reptile.deathAnimation();
+		if (state == alive) {
+			PlaySound(L"res//bang.wav", NULL, SND_FILENAME | SND_ASYNC);
+			state = dead;
+		}
+		else {
+			state = falling;
+		}
+		
 		//shot hit
 		//start reptile death animation
 	}
@@ -107,6 +123,12 @@ void CChildView::OnPaint()
 
 	int curWidth = screenRect.right - screenRect.left;
 	int curHeight = screenRect.bottom - screenRect.top;
+	
+	reptile.setMaxMin(curHeight*0.1, curHeight*0.8);
+	reptile.setDeathYPos(curHeight*0.85);
+	
+	reptile.setYVel(curHeight*0.005*((reptile.getYVel()>0)?1:-1));
+	reptile.setXVel(curWidth*0.005);
 
 	Graphics graphics(mDC.GetDC());
 	
@@ -122,13 +144,8 @@ void CChildView::OnPaint()
 	//resize the bird/reptile
 	displayRept = (Bitmap*)rept->GetThumbnailImage(curWidth/20, curHeight/20);
 
-	
-
-	
-
 
 	graphics.ResetTransform();
-
 
 
 	reptile.setWidth(displayRept->GetWidth());
@@ -147,14 +164,21 @@ void CChildView::OnPaint()
 
 	graphics.DrawImage(displaySling1, RectF(curWidth/10, (curHeight-curHeight/5), curWidth, curHeight), 0, 0, curWidth, curHeight, UnitPixel, 0);
 
-	if (reptile.isAlive()) {
-		graphics.DrawImage(displayRept, RectF(reptile.getXPosition(), reptile.getYPosition(), curWidth, curHeight), 0, 0, curWidth, curHeight, UnitPixel, 0);
-	}
-	else {
-		graphics.TranslateTransform(reptile.getXPosition(), reptile.getYPosition(), MatrixOrderAppend);
-		graphics.RotateTransform(45.0f);
-		graphics.DrawImage(displayRept, RectF(0, 0, curWidth, curHeight), 0, 0, curWidth, curHeight, UnitPixel, 0);
-		graphics.ResetTransform();
+	//when the bird isn't dead on the ground
+	if (state != gone) {
+		if (reptile.isAlive()) {
+			//alive just normal draw
+			graphics.DrawImage(displayRept, RectF(reptile.getXPosition(), reptile.getYPosition(), curWidth, curHeight), 0, 0, curWidth, curHeight, UnitPixel, 0);
+		}
+		else {
+			//falling, rotate
+			PlaySound(L"res/falling.wav", NULL, SND_FILENAME | SND_NOSTOP | SND_ASYNC | SND_LOOP);
+			angle = angle > 360 ? 5 : angle + 5;
+			graphics.TranslateTransform(reptile.getXPosition(), reptile.getYPosition(), MatrixOrderAppend);
+			graphics.RotateTransform(angle);
+			graphics.DrawImage(displayRept, -15, -10, (int)(curWidth* 0.05), (int)(curHeight * 0.05));
+			graphics.ResetTransform();
+		}
 	}
 
 	graphics.DrawImage(displaySling2, RectF(curWidth/10, (curHeight-curHeight/5), curWidth, curHeight), 0, 0, curWidth, curHeight, UnitPixel, 0);
@@ -182,6 +206,22 @@ void CChildView::OnTimer(UINT_PTR nIDEvent)
 		reptile.setXPosition(0);
 	}
 	reptile.Move();
-	reptile.setDeathYPos(screenRect.bottom*0.9);
+	//check if the reptile should go away
+	if (reptile.checkForDelete()) {
+		state = gone;
+		Sleep(1000);
+		ResetGame();
+	}
+
 	Invalidate();
+}
+
+void CChildView::ResetGame() {
+	reptile.setAlive(true);
+	reptile.setYVel(-5);
+	reptile.setXVel(5);
+	reptile.setYPosition(screenRect.bottom/2);
+	reptile.setXPosition(0);
+	state = alive;
+	PlaySound(0, NULL, SND_ASYNC);
 }

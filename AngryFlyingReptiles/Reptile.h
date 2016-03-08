@@ -22,7 +22,8 @@ public:
 	int getHeight();
 	int getCenterX();
 	int getCenterY();
-
+	int getYMax();
+	int getYMin();
 
 	void setXVel(float);
 	void setYVel(float);
@@ -31,10 +32,11 @@ public:
 	void setDeathYPos(int);
 	void setWidth(int);
 	void setHeight(int);
-	
+	void setMaxMin(int, int);
+	void setAlive(bool);
 
 	void Move();
-	void deathAnimation();
+	bool checkForDelete();
 
 private:
 	bool alive;
@@ -49,6 +51,8 @@ private:
 	int centerX;
 	int centerY;
 
+	int yMax;
+	int yMin;
 
 	void setCenter();
 };
